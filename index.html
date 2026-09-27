@@ -74,6 +74,25 @@
     .screen[hidden] { display: none; }
 
     .start-inner, .result-inner { padding: clamp(30px, 7vw, 76px); }
+    .review-shell { padding: clamp(22px, 5vw, 46px); max-height: min(84vh, 880px); overflow-y: auto; }
+    .review-head { display: flex; justify-content: space-between; align-items: end; gap: 18px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+    .review-head h2 { margin: 4px 0 0; font-family: Georgia, "Times New Roman", serif; font-size: clamp(2rem, 5vw, 3.7rem); font-weight: 500; letter-spacing: -.045em; }
+    .review-count { color: var(--amber); font: 800 .8rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: nowrap; }
+    .review-progress { height: 6px; background: #061522; margin-bottom: 26px; }
+    .review-progress > div { height: 100%; background: linear-gradient(90deg, var(--mint), var(--amber)); transition: width 250ms ease; }
+    .review-content { color: #dceaf4; line-height: 1.72; }
+    .review-content h3 { color: var(--mint); margin: 28px 0 9px; font-size: 1.1rem; }
+    .review-content p { margin: 8px 0 14px; }
+    .review-content ul, .review-content ol { padding-left: 22px; margin: 8px 0 18px; }
+    .review-content li { margin: 6px 0; }
+    .review-content strong { color: #fff; }
+    .review-content code { color: var(--amber); background: rgba(255,200,87,.08); border: 1px solid rgba(255,200,87,.2); border-radius: 6px; padding: 2px 6px; }
+    .exam-note { margin: 18px 0; padding: 14px 16px; border-left: 4px solid var(--amber); background: rgba(255,200,87,.08); color: #ffe8ac; }
+    .comparison { width: 100%; border-collapse: collapse; margin: 14px 0 20px; font-size: .9rem; }
+    .comparison th, .comparison td { text-align: left; vertical-align: top; border: 1px solid var(--line); padding: 9px 10px; }
+    .comparison th { color: var(--mint); background: rgba(87,227,180,.06); }
+    .review-actions { position: sticky; bottom: -1px; display: flex; justify-content: space-between; align-items: center; gap: 14px; margin-top: 30px; padding-top: 18px; background: linear-gradient(transparent, #0b2238 24%); }
+    .review-hint { color: var(--muted); font-size: .84rem; }
 
     .eyebrow {
       margin: 0 0 22px;
@@ -235,6 +254,9 @@
       body { padding: 12px; align-items: start; }
       .screen { border-radius: 19px; }
       .start-inner, .result-inner { padding: 34px 24px; }
+      .review-shell { padding: 24px 18px; max-height: none; }
+      .review-head { align-items: start; flex-direction: column; }
+      .comparison { display: block; overflow-x: auto; }
       .hud { grid-template-columns: 1fr 1fr; padding: 15px 17px; gap: 12px; }
       .hud span:not(:first-child) { border-left: 0; padding-left: 0; }
       .hud span:nth-child(even) { text-align: right; }
@@ -257,7 +279,22 @@
         <div class="mission-strip" aria-label="รายละเอียดเกม">
           <span>25 คำถาม</span><span>10 หัวใจ</span><span>7 หมวด</span><span>ประมาณ 15 นาที</span>
         </div>
-        <button id="start-button" class="primary-button" type="button">เริ่มภารกิจ →</button>
+        <button id="start-button" class="primary-button" type="button">เริ่มทบทวน →</button>
+      </div>
+    </section>
+
+    <section id="review-screen" class="screen" hidden>
+      <div class="review-progress" aria-hidden="true"><div id="review-progress-fill"></div></div>
+      <div class="review-shell">
+        <header class="review-head">
+          <div><p class="eyebrow">Pre-exam briefing</p><h2 id="review-title">ทบทวนก่อนเล่น</h2></div>
+          <span id="review-count" class="review-count">บท 1/7</span>
+        </header>
+        <article id="review-content" class="review-content"></article>
+        <div class="review-actions">
+          <span class="review-hint">อ่านบทนี้แล้วจึงไปต่อ</span>
+          <button id="review-next-button" class="primary-button" type="button">บทถัดไป →</button>
+        </div>
       </div>
     </section>
 
@@ -291,6 +328,129 @@
   </main>
 
   <script>
+    const REVIEW_CHAPTERS = [
+      {
+        title: 'พื้นฐาน SPM และ Agile',
+        content: `
+          <div class="exam-note"><strong>★ ออกสอบบ่อย:</strong> Triple Constraint, Project Lifecycle, Agile Manifesto และความแตกต่าง Traditional–Agile</div>
+          <h3>Software Project Management</h3>
+          <p>SPM คือการวางแผน จัดองค์กร ติดตาม และควบคุมการพัฒนาซอฟต์แวร์ เพื่อให้บรรลุเป้าหมายทางธุรกิจภายใต้ข้อจำกัดของโครงการ</p>
+          <h3>Triple Constraint</h3>
+          <ul><li><strong>Scope</strong> — สิ่งที่ต้องส่งมอบ ฟังก์ชัน และมาตรฐานคุณภาพ</li><li><strong>Time</strong> — กำหนดการ Milestone และวันส่งมอบ</li><li><strong>Cost</strong> — บุคลากร Infrastructure เครื่องมือ และค่าใช้จ่าย</li><li><strong>Quality</strong> อยู่ตรงกลางและได้รับผลจากทั้งสามด้าน ส่วนแนวคิดสมัยใหม่เพิ่ม Customer Value</li></ul>
+          <p>เร็ว + ถูก มักกระทบคุณภาพ, ดี + เร็ว ต้องแพง, ดี + ถูก ต้องใช้เวลานาน</p>
+          <h3>Project Lifecycle 5 ระยะ</h3>
+          <ol><li>Initiation — Scope, Stakeholder, Feasibility, Project Charter</li><li>Planning — WBS, Schedule, Budget, Risk Register, Resource Plan</li><li>Execution — พัฒนาเป็น Sprint/Phase และบริหารทีม</li><li>Monitoring — Metrics, Burndown, KPI, Status Report</li><li>Closure — ส่งมอบ Retrospective และ Lessons Learned</li></ol>
+          <h3>Agile Manifesto</h3>
+          <table class="comparison"><tr><th>ให้คุณค่ามากกว่า</th><th>แต่ด้านขวายังมีคุณค่า</th></tr><tr><td>Individuals & Interactions</td><td>Processes & Tools</td></tr><tr><td>Working Software</td><td>Comprehensive Documentation</td></tr><tr><td>Customer Collaboration</td><td>Contract Negotiation</td></tr><tr><td>Responding to Change</td><td>Following a Plan</td></tr></table>
+          <p>หลักการสำคัญ: ส่งมอบคุณค่าตั้งแต่เนิ่น ๆ, ยอมรับการเปลี่ยนแปลง, ส่งมอบบ่อย, ธุรกิจกับ Dev ทำงานร่วมกัน, ทีมจัดการตนเอง, Working Software เป็นตัววัดหลัก, ทำงานอย่างยั่งยืน, Technical Excellence, Simplicity และปรับปรุงผ่าน Reflection</p>
+          <h3>Traditional กับ Agile</h3>
+          <p>Waterfall ทำงานตามลำดับ เอกสารมาก Change มีต้นทุนสูง เหมาะกับ Requirement นิ่ง ส่วน Agile ทำซ้ำเป็นรอบสั้น ใช้เอกสารเท่าที่จำเป็น ยอมรับ Change และเหมาะกับตลาดที่เปลี่ยนเร็ว</p>`
+      },
+      {
+        title: 'Scrum, Kanban, SAFe และ Hybrid',
+        content: `
+          <div class="exam-note"><strong>★ ออกสอบบ่อย:</strong> Scrum Roles/Events/Artifacts, WIP Limit และการเลือก Framework ให้ตรงบริบท</div>
+          <h3>Scrum และ Empiricism</h3>
+          <p>สามเสาได้แก่ <strong>Transparency</strong> มองเห็นข้อมูลร่วมกัน, <strong>Inspection</strong> ตรวจงานเป็นระยะ และ <strong>Adaptation</strong> ปรับเมื่อพบความเบี่ยงเบน</p>
+          <h3>Roles</h3>
+          <ul><li><strong>Product Owner</strong> เพิ่มคุณค่าและจัดลำดับ Product Backlog</li><li><strong>Scrum Master</strong> เป็น Servant-leader อำนวยกิจกรรม ขจัด Impediment และโค้ชทีม</li><li><strong>Development Team</strong> ข้ามสายงาน จัดการตนเอง และรับผิดชอบคุณภาพร่วมกัน</li></ul>
+          <h3>Events</h3>
+          <p>Sprint Planning กำหนด Sprint Goal และเลือกงาน → Daily Standup ประสานงาน/Blocker → Development → Sprint Review ตรวจ Increment กับ Stakeholder และปรับ Backlog → Sprint Retrospective ปรับวิธีทำงาน</p>
+          <h3>Artifacts</h3>
+          <ul><li>Product Backlog — สิ่งที่ผลิตภัณฑ์ต้องมีทั้งหมด จัดลำดับโดย PO</li><li>Sprint Backlog — งานและแผนของ Sprint ปัจจุบัน</li><li>Increment — ผลรวมงานที่เสร็จและใช้งานได้</li><li>Definition of Done — ข้อตกลงคุณภาพร่วมว่า “เสร็จ” คืออะไร</li></ul>
+          <h3>Kanban</h3>
+          <p>ทำงานแบบ Continuous Flow ไม่มี Sprint หรือบทบาทบังคับ ใช้ Visualize Work, Limit WIP, Manage Flow, Explicit Policies และ Collaborative Improvement ตัวชี้วัดหลักคือ Lead Time, Cycle Time และ Throughput</p>
+          <table class="comparison"><tr><th></th><th>Scrum</th><th>Kanban</th><th>SAFe</th><th>Hybrid</th></tr><tr><td>จังหวะ</td><td>Sprint 1–4 สัปดาห์</td><td>ไหลต่อเนื่อง</td><td>PI 8–12 สัปดาห์</td><td>ผสม</td></tr><tr><td>Metric</td><td>Velocity</td><td>Cycle/Lead Time</td><td>PI Objectives</td><td>Milestone/EVM</td></tr><tr><td>เหมาะกับ</td><td>Product Dev</td><td>Support/Ops</td><td>หลายทีม 50–125 คน</td><td>Regulated/Contract</td></tr></table>
+          <p><strong>SAFe</strong> ใช้ Agile Release Train (ART) ประมาณ 5–12 ทีม และ PI Planning เพื่อจัดแนว Goal, Dependency และ Risk ส่วน <strong>Hybrid</strong> วางแผนภาพใหญ่/Gate แบบ Waterfall แต่พัฒนาใน Phase เป็น Sprint</p>`
+      },
+      {
+        title: 'Scoping และ Estimation',
+        content: `
+          <div class="exam-note"><strong>★ ออกสอบบ่อย:</strong> Scope Baseline, INVEST, Given–When–Then, WBS 100% Rule, PERT และ Capacity</div>
+          <h3>Scope และ Scope Creep</h3>
+          <p>Scope คือขอบเขตของสิ่งที่โครงการ “จะ” และ “จะไม่” ส่งมอบ รวม Function, Data, Interface และ Quality Standard</p>
+          <p><code>Scope Baseline = Approved Scope Statement + WBS + WBS Dictionary</code></p>
+          <p>Scope Creep คือเพิ่มขอบเขตโดยไม่ปรับเวลา ต้นทุน หรือทรัพยากร ป้องกันด้วย Acceptance Criteria, Formal Change Request, Backlog Grooming, Scope Freeze และรายงานผลกระทบอย่างโปร่งใส</p>
+          <h3>Requirement</h3>
+          <p><strong>Epic</strong> เป็นงานใหญ่หลาย Sprint แตกเป็น User Story รูปแบบ <code>As a … I want … so that …</code> และควรผ่าน INVEST: Independent, Negotiable, Valuable, Estimable, Small, Testable</p>
+          <p>Acceptance Criteria เขียนก่อนพัฒนาในรูปแบบ <strong>Given–When–Then</strong> ต้องวัดได้ ครอบคลุม Happy Path/Edge Case และแปลงเป็น Test Case ได้</p>
+          <h3>WBS</h3>
+          <p>Work Package ต้องมีเจ้าของ ประมาณการได้ และขอบเขตชัด <strong>100% Rule</strong> คือรวมงานทั้งหมดของโครงการ ไม่ขาดและไม่เกิน ส่วน WBS Dictionary อธิบายรายละเอียด Package</p>
+          <h3>Estimation</h3>
+          <ul><li>Story Point วัด Effort + Complexity + Uncertainty แบบสัมพัทธ์ ไม่ใช่ชั่วโมง</li><li>Planning Poker เปิดไพ่พร้อมกันเพื่อลด Anchoring Bias</li><li>ไม่เปรียบเทียบ Point/Velocity ข้ามทีม และ Story &gt; 8 Points ควรแบ่ง</li><li>Analogous Estimating เหมาะกับ ROM ช่วงต้น; T-shirt Sizing เหมาะกับ Roadmap</li></ul>
+          <p><code>PERT E = (O + 4M + P) / 6</code></p><p><code>PERT SD = (P − O) / 6</code></p><p><code>Sprints = Backlog Points / Average Velocity</code></p><p><code>Capacity = People × Days × Hours × Focus Factor</code></p>
+          <p>Focus Factor มัก 0.70–0.80 และควรเผื่อ Buffer 10–15% ข้อผิดพลาดที่พบบ่อยคือ Optimism Bias, ประมาณทั้งที่ข้อมูลไม่พอ, ลืมเวลาทดสอบ/Review และมอง Estimate เป็นคำมั่น</p>`
+      },
+      {
+        title: 'Tracking, Burndown และ EVM',
+        content: `
+          <div class="exam-note"><strong>★ ออกสอบบ่อย:</strong> การอ่าน Burndown/Burn-up/CFD และคำนวณ SPI/CPI พร้อมแปลผล</div>
+          <h3>Velocity</h3>
+          <p><code>Average Velocity = Σ Story Points ที่ Done / จำนวน Sprint</code> นับเฉพาะ Story ที่ผ่าน DoD; งานเสร็จบางส่วนได้ 0 Point ใช้ค่าเฉลี่ย 3–5 Sprint และใช้ Forecast ไม่ใช่ Performance Target</p>
+          <h3>กราฟสำคัญ</h3>
+          <ul><li><strong>Burndown</strong> แสดงงานคงเหลือ; Actual เหนือ Ideal = ช้า, ต่ำกว่า = เร็ว, เส้นแบน = Blocked/ไม่อัปเดต, ถึง 0 = เสร็จ</li><li><strong>Burn-up</strong> แยก Total Scope และ Work Done จึงเห็น Scope Change; ช่องว่างคือ Remaining Work</li><li><strong>CFD</strong> ความกว้างแถบคือ WIP; In Progress กว้างขึ้น = คอขวด, Done แบน = ไม่มีงานเสร็จ, Done ชัน = Throughput สูง</li></ul>
+          <h3>Earned Value Management</h3>
+          <p><code>PV = % Planned × Budget</code> · <code>EV = % Complete × Budget</code> · <code>AC = Actual Cost</code></p>
+          <p><code>SPI = EV / PV</code> วัด Schedule: &gt;1 เร็ว, =1 ตามแผน, &lt;1 ช้า</p>
+          <p><code>CPI = EV / AC</code> วัด Cost: &gt;1 ต่ำกว่างบ/มีประสิทธิภาพ, =1 ตามงบ, &lt;1 เกินงบ</p>
+          <h3>RAG Status</h3>
+          <ul><li>Green — SPI และ CPI ≥ 0.95 ไม่มี Critical Issue</li><li>Amber — SPI หรือ CPI 0.80–0.95 มี Risk แต่มี Mitigation</li><li>Red — SPI หรือ CPI &lt; 0.80 หรือ Blocker เกิน 5 วัน ต้องแทรกแซงทันที</li></ul>
+          <p>Anti-patterns: 90% Done Forever, Vanity Metrics, Burndown Theatre, Happy Path Reports, Estimation Pressure และ Tracker Overload ควรมี Single Source of Truth และรายงาน Outcome ไม่ใช่ Output</p>`
+      },
+      {
+        title: 'Risk Management',
+        content: `
+          <div class="exam-note"><strong>★ ออกสอบบ่อย:</strong> Risk vs Issue, Risk Score, Risk Register และ Avoid/Transfer/Mitigate/Accept</div>
+          <h3>Risk และ Issue</h3>
+          <p><strong>Risk</strong> คือเหตุการณ์อนาคตที่ไม่แน่นอน อาจมีผลบวกหรือลบ ส่วน <strong>Issue</strong> เกิดขึ้นแล้วและต้องแก้ทันที เมื่อ Risk เกิดขึ้นจริงจะกลายเป็น Issue</p>
+          <p><code>Risk Exposure = Probability × Impact</code> ใช้ Low/Medium/High = 1/2/3 จึงได้คะแนน 1–9 โดย 9 Critical, 6 High, 4 Moderate และ 1–3 ติดตามตามระดับ</p>
+          <h3>ประเภทและกระบวนการ</h3>
+          <p>ประเภทหลัก: Technical, Schedule/Estimation, Resource/People และ Business/Organisational</p>
+          <p>กระบวนการ: <strong>Plan → Identify → Qualitative Analysis → Plan Response → Monitor & Control</strong> วิธีระบุได้แก่ Brainstorming, Checklist, SWOT, Expert Interview, Assumption Analysis และ Lessons Learned</p>
+          <h3>Risk Register</h3>
+          <p>ต้องมี ID, Description, Category, Probability, Impact, Score, Response, Owner, Status และ Contingency Plan เป็น Living Document ที่อัปเดตทุก Sprint</p>
+          <h3>กลยุทธ์ตอบสนอง</h3>
+          <table class="comparison"><tr><th>กลยุทธ์</th><th>ความหมาย</th><th>ตัวอย่าง</th></tr><tr><td>Avoid</td><td>เปลี่ยนแผนเพื่อกำจัด Risk</td><td>เลิกใช้เทคโนโลยีทดลอง</td></tr><tr><td>Transfer</td><td>โอนผลกระทบให้ Third Party</td><td>Insurance, Fixed-price, SLA</td></tr><tr><td>Mitigate</td><td>ลด Probability/Impact</td><td>Prototype, เพิ่ม Test, ผู้เชี่ยวชาญ</td></tr><tr><td>Accept</td><td>ยอมรับและเตรียม Contingency</td><td>กัน Budget สำรอง</td></tr></table>
+          <p><strong>Risk Appetite</strong> คือปริมาณ/ชนิดที่พร้อมรับ, <strong>Tolerance</strong> คือความแปรปรวนที่ยอมรับ และ <strong>Threshold</strong> คือจุดที่ต้อง Escalate</p>
+          <p>ใน Agile: Planning ทบทวน Top Risks, Standup แจ้ง Risk/Issue, Review ดู Trend และ Retrospective ประเมินว่า Response ได้ผลหรือไม่</p>`
+      },
+      {
+        title: 'Automated Testing และ CI/CD',
+        content: `
+          <div class="exam-note"><strong>★ ออกสอบบ่อย:</strong> CI vs Delivery vs Deployment, Test Pyramid, Deployment Strategies และ Observability</div>
+          <h3>CI/CD</h3>
+          <ul><li><strong>Continuous Integration</strong> Merge บ่อยและทุก Change กระตุ้น Build/Test อัตโนมัติ</li><li><strong>Continuous Delivery</strong> Change ที่ผ่าน CI ถูก Package และพร้อม Release แต่ยังมี Human Approval ก่อน Production</li><li><strong>Continuous Deployment</strong> ผ่านทุก Gate แล้ว Deploy Production อัตโนมัติ ไม่มี Human Step</li></ul>
+          <p>DevOps Loop: Plan → Code → Build → Test → Release → Deploy → Operate → Monitor</p>
+          <h3>Pipeline และ Core Practices</h3>
+          <p>Push/PR → Lint → Build → Unit → Integration/Contract → Static Analysis/Security → Review → Merge → Package → Staging → E2E/Performance → Approval → Production → Monitor หาก Gate ใด Fail ต้องหยุด</p>
+          <p>ใช้ Single Source Repository, Self-testing Build, แก้ Broken Build ทันที, Feedback Loop ต่ำกว่า 5–10 นาที และ Staging ใกล้ Production</p>
+          <h3>Test Pyramid</h3>
+          <p>Unit ประมาณ 70% ทดสอบ Function/Class แบบเร็ว, Integration 20% ทดสอบ Component ร่วมกัน, E2E 10% ทดสอบ User Journey; Contract ตรวจ Schema ระหว่าง Service; SAST สแกน Source; DAST ทดสอบระบบที่กำลังรัน</p>
+          <h3>Deployment Strategies</h3>
+          <table class="comparison"><tr><th>แบบ</th><th>จุดเด่น</th><th>ข้อควรระวัง</th></tr><tr><td>Blue-Green</td><td>สลับ Traffic และ Rollback ทันที</td><td>ใช้ Infrastructure สองชุด</td></tr><tr><td>Canary</td><td>ปล่อยกลุ่มเล็ก ลด Blast Radius</td><td>Routing/Monitoring ซับซ้อน</td></tr><tr><td>Rolling</td><td>เปลี่ยน Instance ทีละส่วน</td><td>Old/New ต้อง Compatible</td></tr><tr><td>Feature Flag</td><td>แยก Deployment จาก Release</td><td>ต้องลบ Flag ป้องกัน Flag Debt</td></tr></table>
+          <h3>Observability</h3>
+          <p><strong>Logs</strong> บอกเหตุการณ์, <strong>Metrics</strong> บอกค่าตามเวลา, <strong>Traces</strong> ตาม Request ข้าม Service ส่วน SLI คือสิ่งที่วัด, SLO คือ Target และ SLA คือ Contractual Promise</p>`
+      },
+      {
+        title: 'k6 และมาตรฐาน ISO',
+        content: `
+          <div class="exam-note"><strong>★ ออกสอบบ่อย:</strong> ประเภท Performance Test, k6 Thresholds, PM.1–PM.4, SI.1–SI.6 และ Functional Suitability</div>
+          <h3>Performance Testing ด้วย k6</h3>
+          <ul><li><strong>Smoke</strong> — โหลดต่ำ ตรวจระบบและ Script</li><li><strong>Load</strong> — โหลดปกติที่คาดจริง</li><li><strong>Stress</strong> — ค่อยเพิ่มโหลดเกินปกติเพื่อหาขีดจำกัด</li><li><strong>Spike</strong> — โหลดพุ่งฉับพลันและดูการฟื้นตัว</li><li><strong>Soak</strong> — โหลดนานเพื่อหา Memory Leak/Degradation</li><li><strong>Breaking Point</strong> — Destructive Test ใช้เฉพาะระบบตนเองหรือ Staging ที่ได้รับอนุญาต</li></ul>
+          <p>Script ใช้ options, http.get(), check(), sleep(), stages, __ENV.BASE_URL และ <strong>thresholds</strong> ซึ่งกำหนด Pass/Fail ทั้ง Run และทำให้ CI Fail ได้</p>
+          <p>เกณฑ์ตัวอย่าง: <code>p(95)&lt;800ms</code>, <code>http_req_failed rate&lt;1%</code>, <code>checks rate&gt;99%</code> โดย http_req_waiting คือ TTFB</p>
+          <h3>ISO/IEC 29110</h3>
+          <p>มาตรฐานสำหรับ Very Small Entity (VSE) ไม่เกิน 25 คน ลดความซับซ้อนจาก ISO/IEC 12207/15288 มี 5 Parts: Overview, Framework & Taxonomy, Assessment Guide, Profile Specifications และ Management & Engineering Guide</p>
+          <p>Profiles: <strong>Entry → Basic → Intermediate → Advanced</strong> โดย Basic ใช้มากที่สุดและมีสองกระบวนการหลัก</p>
+          <p><strong>PM:</strong> PM.1 Project Planning → PM.2 Plan Execution → PM.3 Assessment & Control → PM.4 Closure</p>
+          <p><strong>SI:</strong> SI.1 Initiation → SI.2 Requirements Analysis → SI.3 Architecture & Design → SI.4 Construction → SI.5 Integration & Test → SI.6 Product Delivery</p>
+          <table class="comparison"><tr><th>ขั้น</th><th>หลักฐาน</th></tr><tr><td>PM.1</td><td>Project Plan: Scope, Schedule, Resource, Risk</td></tr><tr><td>PM.3</td><td>Progress Status, Change Request</td></tr><tr><td>SI.2</td><td>SRS, Traceability Matrix</td></tr><tr><td>SI.3–4</td><td>Design, Repository, Unit Test, PR/Review</td></tr><tr><td>SI.5</td><td>Test Cases, Test Report</td></tr><tr><td>SI.6</td><td>Delivery/Acceptance Record, User Manual</td></tr></table>
+          <h3>ISO/IEC 25010</h3>
+          <p>คุณภาพ 8 ด้าน: Functional Suitability, Performance Efficiency, Compatibility, Usability, Reliability, Security, Maintainability และ Portability</p>
+          <p><strong>Functional Suitability</strong> แบ่งเป็น Completeness (ฟังก์ชันครบ), Correctness (ผลถูก) และ Appropriateness (ฟังก์ชันเหมาะกับเป้าหมาย ไม่ซับซ้อนเกินจำเป็น) เชื่อมกับ SI.2, SI.5 และ SI.3–4 ตามลำดับ</p>`
+      }
+    ];
+
     const QUESTION_BANK = [
       { category: 'Agile', prompt: 'Agile Manifesto ให้คุณค่ากับสิ่งใดมากกว่า Comprehensive Documentation?', choices: ['Working Software', 'Contract Negotiation', 'Following a Plan', 'Processes and Tools'], correct: 0, explanation: 'Agile ให้คุณค่ากับ Working Software มากกว่าเอกสารที่ครบถ้วน แม้เอกสารยังมีคุณค่า' },
       { category: 'Agile', prompt: 'Scrum Pillar ใดหมายถึงการปรับเมื่อผลตรวจพบความเบี่ยงเบน?', choices: ['Transparency', 'Inspection', 'Adaptation', 'Prediction'], correct: 2, explanation: 'Adaptation คือการปรับผลิตภัณฑ์หรือกระบวนการเมื่อพบความเบี่ยงเบน' },
@@ -366,7 +526,7 @@
 
     const state = {
       questions: [], index: 0, score: 0, lives: 10, combo: 0,
-      answered: false, correctCount: 0, categoryMistakes: {}
+      answered: false, correctCount: 0, categoryMistakes: {}, reviewIndex: 0
     };
 
     const $ = (id) => document.getElementById(id);
@@ -398,9 +558,35 @@
     }
 
     function showScreen(id) {
-      ['start-screen', 'game-screen', 'result-screen'].forEach((screen) => {
+      ['start-screen', 'review-screen', 'game-screen', 'result-screen'].forEach((screen) => {
         $(screen).hidden = screen !== id;
       });
+    }
+
+    function startReview() {
+      state.reviewIndex = 0;
+      showScreen('review-screen');
+      renderReviewChapter();
+    }
+
+    function renderReviewChapter() {
+      const chapter = REVIEW_CHAPTERS[state.reviewIndex];
+      $('review-title').textContent = chapter.title;
+      $('review-content').innerHTML = chapter.content;
+      $('review-count').textContent = `บท ${state.reviewIndex + 1}/${REVIEW_CHAPTERS.length}`;
+      $('review-progress-fill').style.width = `${((state.reviewIndex + 1) / REVIEW_CHAPTERS.length) * 100}%`;
+      $('review-next-button').textContent = state.reviewIndex === REVIEW_CHAPTERS.length - 1 ? 'พร้อมเริ่มเกม →' : 'บทถัดไป →';
+      $('review-screen').scrollTop = 0;
+      $('review-content').focus?.();
+    }
+
+    function advanceReview() {
+      if (state.reviewIndex >= REVIEW_CHAPTERS.length - 1) {
+        startGame();
+        return;
+      }
+      state.reviewIndex += 1;
+      renderReviewChapter();
     }
 
     function startGame() {
@@ -499,10 +685,11 @@
     }
 
     function restartGame() {
-      startGame();
+      startReview();
     }
 
-    $('start-button').addEventListener('click', startGame);
+    $('start-button').addEventListener('click', startReview);
+    $('review-next-button').addEventListener('click', advanceReview);
     $('next-button').addEventListener('click', nextQuestion);
     $('restart-button').addEventListener('click', restartGame);
     document.addEventListener('keydown', (event) => {
