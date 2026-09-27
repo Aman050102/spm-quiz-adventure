@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SPM Quiz Adventure</title>
+  <meta name="description" content="เกมตอบคำถามภาษาไทยสำหรับทบทวน Software Project Management">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23081a2e'/%3E%3Cpath d='M14 40 26 28l9 8 15-17' fill='none' stroke='%2357e3b4' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='50' cy='19' r='5' fill='%23ffc857'/%3E%3C/svg%3E">
+  <style>
+    :root {
+      --ink: #f4f8fb;
+      --muted: #a9bfd2;
+      --navy: #081a2e;
+      --panel: #102a43;
+      --panel-2: #163853;
+      --mint: #57e3b4;
+      --amber: #ffc857;
+      --coral: #ff6b6b;
+      --line: rgba(180, 214, 235, 0.2);
+      --shadow: 0 28px 70px rgba(0, 8, 20, 0.42);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 18% 15%, rgba(87, 227, 180, 0.11), transparent 25rem),
+        radial-gradient(circle at 87% 82%, rgba(255, 200, 87, 0.09), transparent 28rem),
+        var(--navy);
+      font-family: "Noto Sans Thai", "Leelawadee UI", Tahoma, sans-serif;
+      display: grid;
+      place-items: center;
+      padding: 28px 18px;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.22;
+      background-image:
+        linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+      background-size: 42px 42px;
+      mask-image: linear-gradient(to bottom, black, transparent 80%);
+    }
+
+    button { font: inherit; }
+
+    button:focus-visible {
+      outline: 3px solid var(--amber);
+      outline-offset: 4px;
+    }
+
+    main {
+      width: min(880px, 100%);
+      position: relative;
+      z-index: 1;
+    }
+
+    .screen {
+      background: linear-gradient(145deg, rgba(16, 42, 67, 0.98), rgba(9, 31, 51, 0.98));
+      border: 1px solid var(--line);
+      border-radius: 26px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      animation: screen-in 320ms ease-out both;
+    }
+
+    .screen[hidden] { display: none; }
+
+    .start-inner, .result-inner { padding: clamp(30px, 7vw, 76px); }
+
+    .eyebrow {
+      margin: 0 0 22px;
+      color: var(--mint);
+      font: 700 0.76rem/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      max-width: 720px;
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(3rem, 9vw, 6.8rem);
+      font-weight: 500;
+      line-height: 0.88;
+      letter-spacing: -0.055em;
+    }
+
+    h1 span { color: var(--mint); font-style: italic; }
+
+    .lead {
+      max-width: 590px;
+      margin: 28px 0 34px;
+      color: var(--muted);
+      font-size: clamp(1rem, 2vw, 1.18rem);
+      line-height: 1.75;
+    }
+
+    .mission-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 20px;
+      margin: 0 0 36px;
+      color: var(--ink);
+      font-size: 0.9rem;
+    }
+
+    .mission-strip span::before { content: "◆"; color: var(--amber); margin-right: 8px; font-size: .65em; }
+
+    .primary-button {
+      border: 0;
+      border-radius: 999px;
+      background: var(--mint);
+      color: #052217;
+      padding: 15px 25px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 8px 26px rgba(87, 227, 180, 0.2);
+      transition: transform 160ms ease, box-shadow 160ms ease, filter 160ms ease;
+    }
+
+    .primary-button:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.05); box-shadow: 0 12px 32px rgba(87, 227, 180, 0.28); }
+    .primary-button:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
+
+    .hud {
+      display: grid;
+      grid-template-columns: 1fr auto auto auto;
+      gap: 10px;
+      align-items: center;
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(3, 19, 34, 0.38);
+      font: 700 0.79rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+      letter-spacing: .02em;
+    }
+
+    .hud span:not(:first-child) { border-left: 1px solid var(--line); padding-left: 14px; }
+    #lives-display { color: var(--coral); letter-spacing: .12em; }
+    #combo-display { color: var(--amber); }
+
+    .sprint-route { height: 8px; background: #061522; position: relative; }
+    .progress-fill { height: 100%; width: 0; background: linear-gradient(90deg, var(--mint), var(--amber)); transition: width 350ms ease; box-shadow: 0 0 18px rgba(87, 227, 180, 0.42); }
+
+    .question-shell { padding: clamp(25px, 5vw, 48px); }
+
+    .category-label {
+      display: inline-flex;
+      margin: 0 0 15px;
+      padding: 6px 11px;
+      border: 1px solid rgba(87, 227, 180, .32);
+      border-radius: 999px;
+      color: var(--mint);
+      background: rgba(87, 227, 180, .07);
+      font-size: .76rem;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .question-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; }
+    .question-meta .category-label { margin-bottom: 0; }
+    .priority-badge {
+      padding: 6px 11px;
+      border-radius: 999px;
+      color: #2b1c00;
+      background: var(--amber);
+      font-size: .76rem;
+      font-weight: 900;
+      letter-spacing: .03em;
+    }
+    .priority-badge[hidden] { display: none; }
+
+    #question-text {
+      margin: 0 0 28px;
+      font-size: clamp(1.35rem, 3.1vw, 2.05rem);
+      line-height: 1.45;
+      letter-spacing: -.025em;
+    }
+
+    .answers { display: grid; gap: 12px; }
+
+    .answer-button {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: rgba(255,255,255,.035);
+      color: var(--ink);
+      padding: 15px 17px;
+      text-align: left;
+      cursor: pointer;
+      line-height: 1.48;
+      transition: transform 150ms ease, border-color 150ms ease, background 150ms ease;
+    }
+
+    .answer-button:hover:not(:disabled) { transform: translateX(4px); border-color: rgba(87, 227, 180, .7); background: rgba(87, 227, 180, .08); }
+    .answer-button[data-result="correct"] { border-color: var(--mint); background: rgba(87, 227, 180, .14); color: #cffff0; }
+    .answer-button[data-result="wrong"] { border-color: var(--coral); background: rgba(255, 107, 107, .12); }
+
+    .feedback {
+      margin: 22px 0 0;
+      border-left: 4px solid var(--amber);
+      background: rgba(255, 200, 87, .08);
+      padding: 14px 16px;
+      color: #f7e8bf;
+      line-height: 1.65;
+    }
+
+    .question-actions { margin-top: 24px; display: flex; justify-content: flex-end; }
+
+    #result-rank {
+      display: inline-block;
+      margin: 0 0 16px;
+      color: var(--amber);
+      font: 800 .82rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    #result-title { margin: 0; font-family: Georgia, "Times New Roman", serif; font-size: clamp(2.5rem, 7vw, 5.2rem); font-weight: 500; line-height: .95; letter-spacing: -.05em; }
+    #result-score { color: var(--mint); font-size: 1.2rem; font-weight: 800; margin: 26px 0 14px; }
+    #review-panel { color: var(--muted); line-height: 1.7; margin-bottom: 30px; }
+
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+    @keyframes screen-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+    @media (max-width: 620px) {
+      body { padding: 12px; align-items: start; }
+      .screen { border-radius: 19px; }
+      .start-inner, .result-inner { padding: 34px 24px; }
+      .hud { grid-template-columns: 1fr 1fr; padding: 15px 17px; gap: 12px; }
+      .hud span:not(:first-child) { border-left: 0; padding-left: 0; }
+      .hud span:nth-child(even) { text-align: right; }
+      .question-shell { padding: 25px 19px; }
+      .answer-button { min-height: 54px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section id="start-screen" class="screen">
+      <div class="start-inner">
+        <p class="eyebrow">Software Project Management · Mission 01</p>
+        <h1>SPM Quiz<br><span>Adventure</span></h1>
+        <p class="lead">ตอบคำถาม 25 ข้อ รักษาหัวใจ และพิชิตภารกิจบริหารโครงการให้สำเร็จ แต่ละรอบมีข้อควรจำที่มีโอกาสออกสอบสูง พร้อมคำอธิบายทันที</p>
+        <div class="mission-strip" aria-label="รายละเอียดเกม">
+          <span>25 คำถาม</span><span>10 หัวใจ</span><span>7 หมวด</span><span>ประมาณ 15 นาที</span>
+        </div>
+        <button id="start-button" class="primary-button" type="button">เริ่มภารกิจ →</button>
+      </div>
+    </section>
+
+    <section id="game-screen" class="screen" hidden>
+      <header class="hud" aria-label="สถานะเกม">
+        <span id="question-counter">ข้อ 1/25</span>
+        <span id="score-display">0 คะแนน</span>
+        <span id="lives-display" aria-label="หัวใจ 10 ดวง">♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥</span>
+        <span id="combo-display">คอมโบ ×0</span>
+      </header>
+      <div class="sprint-route" role="progressbar" aria-label="ความคืบหน้าของคำถาม" aria-valuemin="0" aria-valuemax="25"><div id="progress-fill" class="progress-fill"></div></div>
+      <div class="question-shell">
+        <div class="question-meta"><p id="category-label" class="category-label"></p><span id="priority-badge" class="priority-badge" hidden>★ ควรจำ</span></div>
+        <h2 id="question-text"></h2>
+        <div id="answers" class="answers"></div>
+        <div id="feedback" class="feedback" hidden></div>
+        <div class="question-actions"><button id="next-button" class="primary-button" type="button" disabled>ข้อต่อไป</button></div>
+      </div>
+    </section>
+
+    <section id="result-screen" class="screen" hidden>
+      <div class="result-inner">
+        <p id="result-rank"></p>
+        <h2 id="result-title">สรุป<br>ภารกิจ</h2>
+        <p id="result-score"></p>
+        <div id="review-panel"></div>
+        <button id="restart-button" class="primary-button" type="button">เล่นอีกครั้ง ↻</button>
+      </div>
+    </section>
+    <p id="announcer" class="sr-only" aria-live="polite"></p>
+  </main>
+
+  <script>
+    const QUESTION_BANK = [
+      { category: 'Agile', prompt: 'Agile Manifesto ให้คุณค่ากับสิ่งใดมากกว่า Comprehensive Documentation?', choices: ['Working Software', 'Contract Negotiation', 'Following a Plan', 'Processes and Tools'], correct: 0, explanation: 'Agile ให้คุณค่ากับ Working Software มากกว่าเอกสารที่ครบถ้วน แม้เอกสารยังมีคุณค่า' },
+      { category: 'Agile', prompt: 'Scrum Pillar ใดหมายถึงการปรับเมื่อผลตรวจพบความเบี่ยงเบน?', choices: ['Transparency', 'Inspection', 'Adaptation', 'Prediction'], correct: 2, explanation: 'Adaptation คือการปรับผลิตภัณฑ์หรือกระบวนการเมื่อพบความเบี่ยงเบน' },
+      { category: 'Agile', prompt: 'ใครเป็นเจ้าของและจัดลำดับ Product Backlog?', choices: ['Scrum Master', 'Product Owner', 'Project Sponsor', 'Development Team'], correct: 1, explanation: 'Product Owner จัดลำดับ Product Backlog เพื่อเพิ่มคุณค่าของผลิตภัณฑ์' },
+      { category: 'Agile', prompt: 'กิจกรรมใดทบทวนวิธีทำงานของทีมเพื่อปรับปรุง Sprint ถัดไป?', choices: ['Sprint Review', 'Daily Standup', 'Sprint Planning', 'Sprint Retrospective'], correct: 3, explanation: 'Retrospective ตรวจวิธีทำงาน ส่วน Review ตรวจ Increment และรับ Feedback' },
+      { category: 'Agile', prompt: 'ทีม Support รับ Ticket ไม่แน่นอนและต้องจัดลำดับใหม่ตลอด ควรใช้กรอบงานใด?', choices: ['Kanban', 'Waterfall', 'SAFe Portfolio', 'Scrum แบบล็อกงานตลอด'], correct: 0, explanation: 'Kanban เหมาะกับ Continuous Flow และเปลี่ยนลำดับงานได้ตลอด' },
+      { category: 'Agile', prompt: 'WIP Limit ใน Kanban มีเป้าหมายหลักอะไร?', choices: ['เพิ่มงานที่เริ่มพร้อมกัน', 'ลด Multitasking และเปิดเผยคอขวด', 'ล็อก Requirement', 'เพิ่มขนาดทีม'], correct: 1, explanation: 'WIP Limit จำกัดงานระหว่างทำ ลดการสลับงาน และทำให้คอขวดปรากฏชัด' },
+      { category: 'Agile', prompt: 'SAFe เหมาะกับบริบทใดมากที่สุด?', choices: ['Developer คนเดียว', 'ทีม Support 3 คน', 'หลายทีม 50–125 คนที่มี Dependency', 'โครงการ 2 วัน'], correct: 2, explanation: 'SAFe ใช้ Agile Release Train ประสานหลายทีมในระดับองค์กร' },
+      { category: 'Scoping', prompt: 'Scope Baseline ประกอบด้วยอะไร?', choices: ['Charter + Risk Register', 'Scope Statement + WBS + WBS Dictionary', 'Backlog + Increment', 'Budget + SPI + CPI'], correct: 1, explanation: 'Scope Baseline คือ Approved Scope Statement, WBS และ WBS Dictionary' },
+      { category: 'Scoping', prompt: 'ตัวอักษร T ในหลัก INVEST หมายถึงอะไร?', choices: ['Timed', 'Technical', 'Traceable', 'Testable'], correct: 3, explanation: 'User Story ที่ดีต้อง Testable หรือทดสอบยืนยันได้' },
+      { category: 'Scoping', prompt: 'Acceptance Criteria นิยมเขียนด้วยรูปแบบใด?', choices: ['Plan–Do–Check', 'Given–When–Then', 'Who–What–Where', 'Build–Test–Deploy'], correct: 1, explanation: 'Given ระบุสภาวะ, When ระบุการกระทำ และ Then ระบุผลที่สังเกตได้' },
+      { category: 'Scoping', prompt: 'Story Point ใช้วัดอะไร?', choices: ['จำนวนชั่วโมงแน่นอน', 'Effort, Complexity และ Uncertainty แบบสัมพัทธ์', 'งบประมาณจริง', 'จำนวน Developer'], correct: 1, explanation: 'Story Point เป็น Relative Estimation ไม่ใช่ชั่วโมงหรือวัน' },
+      { category: 'Scoping', prompt: 'PERT: O=2, M=5, P=14 ค่า Expected Time เท่าไร?', choices: ['5 วัน', '6 วัน', '7 วัน', '8 วัน'], correct: 1, explanation: 'E=(O+4M+P)/6=(2+20+14)/6=6 วัน' },
+      { category: 'Scoping', prompt: 'Backlog 240 Points และ Velocity 40 Points/Sprint ต้องใช้กี่ Sprint?', choices: ['4', '5', '6', '8'], correct: 2, explanation: 'จำนวน Sprint = 240/40 = 6 Sprint' },
+      { category: 'Tracking', prompt: 'Story ทำได้ 80% แต่ยังไม่ผ่าน Definition of Done ควรนับ Velocity เท่าไร?', choices: ['80% ของ Point', 'ครึ่งหนึ่ง', 'เต็ม Point', '0 Point'], correct: 3, explanation: 'Velocity นับเฉพาะงานที่ผ่าน DoD งานไม่เสร็จได้ 0 Point' },
+      { category: 'Tracking', prompt: 'ข้อดีสำคัญของ Burn-up เมื่อเทียบกับ Burndown คืออะไร?', choices: ['ไม่ต้องใช้ข้อมูลจริง', 'เห็นการเปลี่ยน Total Scope ชัด', 'แสดงเฉพาะงานคงเหลือ', 'ใช้แทน Risk Register'], correct: 1, explanation: 'Burn-up แยก Total Scope กับ Work Done จึงเห็น Scope Change ชัดเจน' },
+      { category: 'Tracking', prompt: 'ใน CFD แถบ In Progress กว้างขึ้นเรื่อย ๆ หมายถึงอะไร?', choices: ['Throughput สูง', 'WIP สะสมหรือเกิดคอขวด', 'Scope ลดลง', 'งานทั้งหมดเสร็จ'], correct: 1, explanation: 'ความกว้างของแถบคือ WIP; แถบกว้างขึ้นแสดงงานค้างในขั้นนั้น' },
+      { category: 'Tracking', prompt: 'ถ้า EV=80 และ PV=100 ค่า SPI และความหมายคือข้อใด?', choices: ['0.80 ช้ากว่าแผน', '0.80 เร็วกว่าแผน', '1.25 ช้ากว่าแผน', '1.25 เร็วกว่าแผน'], correct: 0, explanation: 'SPI=EV/PV=0.80; ค่าน้อยกว่า 1 หมายถึงช้ากว่าแผน' },
+      { category: 'Tracking', prompt: 'ถ้า EV=80 และ AC=64 ค่า CPI เป็นอย่างไร?', choices: ['0.80 เกินงบ', '0.80 ต่ำกว่างบ', '1.25 ต่ำกว่างบ', '1.25 เกินงบ'], correct: 2, explanation: 'CPI=EV/AC=1.25; มากกว่า 1 หมายถึงใช้ต้นทุนมีประสิทธิภาพหรือต่ำกว่างบ' },
+      { category: 'Risk', prompt: 'ข้อใดแยก Risk กับ Issue ได้ถูกต้อง?', choices: ['Risk เกิดแล้ว Issue ยังไม่เกิด', 'Risk ยังไม่แน่นอน Issue เกิดแล้ว', 'ทั้งสองเหมือนกัน', 'Issue มีแต่ผลกระทบด้านต้นทุน'], correct: 1, explanation: 'Risk เป็นเหตุการณ์อนาคตที่ไม่แน่นอน เมื่อเกิดขึ้นจริงจะกลายเป็น Issue' },
+      { category: 'Risk', prompt: 'Probability=High (3), Impact=Medium (2) มี Risk Score เท่าไร?', choices: ['3', '5', '6', '9'], correct: 2, explanation: 'Risk Score = Probability × Impact = 3×2 = 6 จัดเป็นระดับ High' },
+      { category: 'Risk', prompt: 'เปลี่ยนจาก Framework ทดลองไปใช้ Framework ที่พิสูจน์แล้วเพื่อกำจัดความเสี่ยง เป็นกลยุทธ์ใด?', choices: ['Accept', 'Mitigate', 'Transfer', 'Avoid'], correct: 3, explanation: 'Avoid คือเปลี่ยนแผนเพื่อกำจัดความเสี่ยงทั้งหมด' },
+      { category: 'Risk', prompt: 'การซื้อประกันหรือกำหนด SLA Penalty เป็น Risk Response แบบใด?', choices: ['Avoid', 'Transfer', 'Mitigate', 'Accept'], correct: 1, explanation: 'Transfer คือโอนผลกระทบหรือความรับผิดให้ Third Party' },
+      { category: 'CI/CD', prompt: 'Continuous Delivery ต่างจาก Continuous Deployment อย่างไร?', choices: ['Delivery ไม่มี Test', 'Delivery ยังมี Human Approval ก่อน Production', 'Deployment ไม่ขึ้น Production', 'ไม่ต่างกัน'], correct: 1, explanation: 'Delivery พร้อมปล่อยแต่ยังต้องอนุมัติ ส่วน Deployment ปล่อย Production อัตโนมัติ' },
+      { category: 'CI/CD', prompt: 'Test ชนิดใดควรมีมากที่สุดตาม Test Pyramid?', choices: ['E2E', 'Performance', 'Unit', 'DAST'], correct: 2, explanation: 'Unit Test เร็วและต้นทุนต่ำ จึงเป็นฐานประมาณ 70% ของ Test Pyramid' },
+      { category: 'CI/CD', prompt: 'กลยุทธ์ใดมี Environment เก่าและใหม่ แล้วสลับ Traffic เพื่อ Rollback ได้ทันที?', choices: ['Canary', 'Blue-Green', 'Rolling', 'Feature Branch'], correct: 1, explanation: 'Blue-Green ใช้สอง Environment เหมือนกันและสลับ Traffic ได้ทันที' },
+      { category: 'CI/CD', prompt: 'Observability สามเสาหลักคืออะไร?', choices: ['Logs, Metrics, Traces', 'Plan, Build, Test', 'Scope, Time, Cost', 'SLI, SLO, SLA'], correct: 0, explanation: 'Logs บอกเหตุการณ์, Metrics บอกค่าตามเวลา และ Traces ตาม Request ข้าม Service' },
+      { category: 'k6', prompt: 'Test แบบใดใช้หา Memory Leak หรือ Performance ที่ลดลงตามเวลา?', choices: ['Smoke', 'Spike', 'Soak', 'Unit'], correct: 2, explanation: 'Soak Test รันโหลดต่อเนื่องเป็นเวลานานเพื่อดูความเสถียร' },
+      { category: 'k6', prompt: 'ใน k6 สิ่งใดกำหนด Pass/Fail ของทั้ง Run และทำให้ CI Fail ได้?', choices: ['sleep', 'check', 'thresholds', 'tags'], correct: 2, explanation: 'Thresholds ทำให้ k6 จบด้วย Exit Code ไม่เป็น 0 เมื่อไม่ผ่านเกณฑ์' },
+      { category: 'k6', prompt: 'Breaking Point Test ควรใช้กับระบบใด?', choices: ['เว็บสาธารณะทุกเว็บ', 'ระบบตนเองหรือ Staging ที่ได้รับอนุญาต', 'เว็บไซต์คู่แข่ง', 'Production ของบุคคลที่สาม'], correct: 1, explanation: 'เป็น Destructive Test ต้องใช้เฉพาะระบบที่เป็นเจ้าของหรือได้รับอนุญาต' },
+      { category: 'ISO', prompt: 'ISO/IEC 29110 ออกแบบมาสำหรับองค์กรแบบใด?', choices: ['VSE ไม่เกิน 25 คน', 'องค์กรเกิน 1,000 คนเท่านั้น', 'หน่วยงานรัฐเท่านั้น', 'ทีม Hardware เท่านั้น'], correct: 0, explanation: 'ISO/IEC 29110 ปรับกระบวนการให้เหมาะกับ Very Small Entity ไม่เกิน 25 คน' },
+      { category: 'ISO', prompt: 'Basic Profile ของ ISO/IEC 29110 มีสองกระบวนการหลักอะไร?', choices: ['QA และ HR', 'PM และ SI', 'CI และ CD', 'Scope และ Cost'], correct: 1, explanation: 'Basic Profile ประกอบด้วย Project Management และ Software Implementation' },
+      { category: 'ISO', prompt: 'การทำ SRS และ Traceability Matrix อยู่ในขั้นใด?', choices: ['PM.4', 'SI.2', 'SI.5', 'SI.6'], correct: 1, explanation: 'SI.2 Requirements Analysis ใช้ SRS และ Traceability Matrix เป็นหลักฐาน' },
+      { category: 'ISO', prompt: 'ระบบมีฟังก์ชันครบตาม SRS แต่คำนวณผลผิด เป็นปัญหาด้านใด?', choices: ['Functional Completeness', 'Functional Correctness', 'Functional Appropriateness', 'Portability'], correct: 1, explanation: 'ฟังก์ชันมีครบแต่ผลลัพธ์ผิด คือ Functional Correctness' },
+      { category: 'Agile', priority: true, prompt: 'ข้อใดไม่ใช่หนึ่งใน 4 คุณค่าของ Agile Manifesto?', choices: ['Customer Collaboration', 'Working Software', 'Fixed Scope', 'Responding to Change'], correct: 2, explanation: 'Fixed Scope ไม่ใช่คุณค่าของ Agile; Agile ยอมรับการเปลี่ยนแปลงเพื่อสร้างคุณค่า' },
+      { category: 'Agile', priority: true, prompt: 'หลักการ Agile ใช้อะไรเป็นตัววัดความก้าวหน้าหลัก?', choices: ['จำนวนเอกสาร', 'Working Software', 'ชั่วโมงประชุม', 'จำนวน Commit'], correct: 1, explanation: 'Working Software เป็นตัววัดความก้าวหน้าหลักตามหลักการ Agile' },
+      { category: 'Agile', priority: true, prompt: 'ใครทำหน้าที่ขจัด Impediment และโค้ชแนวทาง Agile?', choices: ['Product Owner', 'Scrum Master', 'Sponsor', 'Customer'], correct: 1, explanation: 'Scrum Master เป็น Servant-leader ที่อำนวยกิจกรรมและช่วยขจัดอุปสรรค' },
+      { category: 'Agile', prompt: 'Sprint Review มีผลลัพธ์สำคัญที่สุดข้อใด?', choices: ['ประเมินผลงานรายบุคคล', 'ตรวจ Increment และปรับ Product Backlog', 'กำหนดเงินเดือน', 'ล็อกแผนทั้งโครงการ'], correct: 1, explanation: 'Sprint Review ใช้ตรวจผลิตภัณฑ์กับ Stakeholder และปรับ Product Backlog จาก Feedback' },
+      { category: 'Agile', prompt: 'Definition of Done ช่วยเรื่องใดมากที่สุด?', choices: ['เพิ่ม Scope', 'สร้างมาตรฐานคุณภาพร่วมว่าเสร็จคืออะไร', 'แทน Product Backlog', 'กำหนดงบประมาณ'], correct: 1, explanation: 'DoD เป็นข้อตกลงร่วมที่ทำให้ทุก Story ใช้มาตรฐานความเสร็จและคุณภาพเดียวกัน' },
+      { category: 'Agile', prompt: 'Hybrid Approach เหมาะกับโครงการใด?', choices: ['งานที่ไม่ต้องมีเอกสาร', 'งานกำกับสูงหรือ Fixed-price Contract', 'งาน Ticket รายวันเท่านั้น', 'Prototype คนเดียว'], correct: 1, explanation: 'Hybrid ผสมแผนและ Gate แบบ Waterfall กับการพัฒนาเป็น Sprint เหมาะกับงานกำกับหรือสัญญาคงที่' },
+      { category: 'Agile', prompt: 'PI Planning ใน SAFe มักเกิดทุกช่วงเวลาใด?', choices: ['ทุกวัน', 'ทุก 1–2 สัปดาห์', 'ทุก 8–12 สัปดาห์', 'ทุก 2 ปี'], correct: 2, explanation: 'Program Increment ของ SAFe มักวางแผนร่วมกันทุก 8–12 สัปดาห์' },
+      { category: 'Agile', prompt: 'Kanban ใช้ Metric ใดเพื่อวัดเวลาตั้งแต่งานเริ่มทำจนเสร็จ?', choices: ['Cycle Time', 'CPI', 'Velocity เท่านั้น', 'Budget Variance'], correct: 0, explanation: 'Cycle Time วัดเวลาตั้งแต่เริ่มทำงานจนงานเสร็จ ส่วน Lead Time เริ่มตั้งแต่มีคำขอ' },
+      { category: 'Scoping', priority: true, prompt: 'Scope Creep หมายถึงอะไร?', choices: ['ลดขอบเขตอย่างเป็นทางการ', 'เพิ่มขอบเขตโดยไม่ปรับเวลา ต้นทุน หรือทรัพยากร', 'เปลี่ยน Sprint Goal', 'ปิดโครงการก่อนเวลา'], correct: 1, explanation: 'Scope Creep คือการขยายขอบเขตแบบควบคุมไม่ได้โดยไม่ปรับข้อจำกัดอื่น' },
+      { category: 'Scoping', priority: true, prompt: '100% Rule ของ WBS หมายถึงอะไร?', choices: ['ทุกคนต้องทำงาน 100%', 'รวมงานโครงการทั้งหมด ไม่ขาดและไม่เกิน', 'ทุกงานต้องเสร็จใน Sprint เดียว', 'ใช้ Budget เต็มทั้งหมด'], correct: 1, explanation: 'WBS ต้องครอบคลุมงานทั้งหมดที่อยู่ใน Scope โดยไม่ขาดและไม่เพิ่มงานนอก Scope' },
+      { category: 'Scoping', priority: true, prompt: 'PERT Standard Deviation ใช้สูตรใด?', choices: ['(P−O)/6', '(O+M+P)/3', 'EV/PV', 'Backlog/Velocity'], correct: 0, explanation: 'ความไม่แน่นอนของ PERT ประมาณด้วย SD=(P−O)/6' },
+      { category: 'Scoping', prompt: 'ทีม 5 คน ทำงาน 10 วัน วันละ 8 ชั่วโมง Focus Factor 0.75 มี Capacity เท่าไร?', choices: ['250', '300', '375', '400'], correct: 1, explanation: 'Capacity=5×10×8×0.75=300 person-hours' },
+      { category: 'Scoping', prompt: 'Planning Poker ลด Bias ใดด้วยการเปิดไพ่พร้อมกัน?', choices: ['Survivorship Bias', 'Anchoring Bias', 'Selection Bias', 'Recency Bias'], correct: 1, explanation: 'การเปิดคะแนนพร้อมกันช่วยป้องกันคะแนนแรกชี้นำหรือ Anchoring Bias' },
+      { category: 'Scoping', prompt: 'Analogous Estimating เหมาะกับช่วงใดมากที่สุด?', choices: ['ทดสอบ Unit', 'ประมาณ ROM ช่วงต้นโดยเทียบงานคล้ายกัน', 'คำนวณ CPI', 'กำหนด DoD'], correct: 1, explanation: 'Analogous Estimating รวดเร็ว เหมาะกับ Rough Order of Magnitude ช่วงต้น แต่ความแม่นยำต่ำกว่า' },
+      { category: 'Tracking', priority: true, prompt: 'เส้น Actual ใน Burndown อยู่เหนือเส้น Ideal หมายถึงอะไร?', choices: ['เร็วกว่าแผน', 'ช้ากว่าแผน', 'Scope ลดลง', 'งบต่ำกว่าแผน'], correct: 1, explanation: 'งานคงเหลือจริงมากกว่า Ideal จึงหมายถึงทีมช้ากว่าแผน' },
+      { category: 'Tracking', priority: true, prompt: 'เส้น Burndown แบนหลายวันมักส่งสัญญาณอะไร?', choices: ['ทีมทำงานเร็ว', 'Blocked หรือไม่อัปเดตงาน', 'งานเสร็จทั้งหมด', 'Scope เพิ่มแน่นอน'], correct: 1, explanation: 'เส้นแบนหมายถึงงานคงเหลือไม่ลดลง จึงควรตรวจ Blocker หรือการอัปเดตข้อมูล' },
+      { category: 'Tracking', priority: true, prompt: 'SPI=1.10 และ CPI=0.80 แปลผลอย่างไร?', choices: ['ช้ากว่าแผนและต่ำกว่างบ', 'เร็วกว่าแผนแต่เกินงบ', 'ตามแผนและตามงบ', 'ช้ากว่าแผนแต่ต่ำกว่างบ'], correct: 1, explanation: 'SPI>1 คือเร็วกว่าแผน ส่วน CPI<1 คือใช้ต้นทุนเกินคุณค่าที่ส่งมอบ' },
+      { category: 'Tracking', prompt: 'PV ย่อมาจากอะไรและคำนวณอย่างไร?', choices: ['Planned Value = % Planned × Budget', 'Project Velocity = Points/Day', 'Present Value = Cost/Time', 'Product Value = EV/AC'], correct: 0, explanation: 'PV คือมูลค่างานตามแผน ณ เวลาหนึ่ง คำนวณจากสัดส่วนงานตามแผนคูณ Budget' },
+      { category: 'Tracking', prompt: 'RAG สถานะ Amber ตามเกณฑ์ในสไลด์มักอยู่ช่วงใด?', choices: ['SPI/CPI มากกว่า 1.5', 'SPI หรือ CPI 0.80–0.95', 'SPI/CPI เท่ากับ 0 เท่านั้น', 'ไม่มี Metric'], correct: 1, explanation: 'ช่วง 0.80–0.95 สื่อว่า At Risk แต่ยังจัดการได้และควรมี Mitigation Plan' },
+      { category: 'Tracking', prompt: 'เหตุใดไม่ควรใช้ Velocity เป็น Performance Target?', choices: ['Velocity วัดเงินเท่านั้น', 'ทีมอาจบิดคะแนนและบริบทแต่ละทีมต่างกัน', 'Velocity คำนวณไม่ได้', 'ใช้ได้เฉพาะ Waterfall'], correct: 1, explanation: 'Velocity เป็นเครื่องมือ Forecast; การกดดันด้วยตัวเลขทำให้ทีม Inflate Points และทำลายความน่าเชื่อถือ' },
+      { category: 'Risk', priority: true, prompt: 'ลำดับกระบวนการ Risk Management ที่ถูกต้องคือข้อใด?', choices: ['Identify→Plan→Close', 'Plan→Identify→Analyse→Respond→Monitor', 'Respond→Identify→Budget', 'Monitor→Ignore→Close'], correct: 1, explanation: 'กระบวนการหลักคือ Plan, Identify, Analyse, Plan Response และ Monitor & Control' },
+      { category: 'Risk', priority: true, prompt: 'Risk Register ควรมีข้อมูลใด?', choices: ['เฉพาะชื่อ Risk', 'ID, Description, Probability, Impact, Score, Response และ Owner', 'เฉพาะ Budget', 'เฉพาะ Issue ที่เกิดแล้ว'], correct: 1, explanation: 'Risk Register เป็น Living Document ที่ระบุคะแนน กลยุทธ์ เจ้าของ และสถานะเพื่อติดตามได้' },
+      { category: 'Risk', priority: true, prompt: 'Risk Threshold ต่างจาก Risk Appetite อย่างไร?', choices: ['Threshold คือจุดที่ต้องดำเนินการ ส่วน Appetite คือระดับ Risk ที่พร้อมรับ', 'เหมือนกัน', 'Appetite คือ Issue', 'Threshold ใช้กับ Cost เท่านั้น'], correct: 0, explanation: 'Appetite คือปริมาณ/ชนิด Risk ที่พร้อมรับ ส่วน Threshold คือจุดเฉพาะที่ต้อง Escalate หรือ Response' },
+      { category: 'Risk', prompt: 'เพิ่ม Test Coverage และทำ Prototype เพื่อลดโอกาสเกิดปัญหา เป็นกลยุทธ์ใด?', choices: ['Avoid', 'Transfer', 'Mitigate', 'Accept'], correct: 2, explanation: 'Mitigate ลด Probability หรือ Impact โดยไม่ได้กำจัด Risk ทั้งหมด' },
+      { category: 'Risk', prompt: 'ใน Scrum ควรทบทวน Top Risks และมอบหมาย Owner เมื่อใด?', choices: ['Sprint Planning', 'หลังปิดโครงการเท่านั้น', 'ระหว่าง Production Incident เท่านั้น', 'ไม่ต้องทบทวน'], correct: 0, explanation: 'Sprint Planning ควรทบทวน Risk Register และนำ Risk Task ที่จำเป็นเข้า Sprint Backlog' },
+      { category: 'CI/CD', priority: true, prompt: 'ลำดับ CI Pipeline ใดเหมาะสมที่สุด?', choices: ['Deploy→Code→Test', 'Push/PR→Lint→Build→Unit→Integration→Security→Merge', 'Merge→เขียน Test→Build', 'Monitor→Plan→Delete'], correct: 1, explanation: 'Pipeline ควรตรวจคุณภาพตาม Gate ก่อน Merge และหยุดทันทีเมื่อ Stage ใดล้มเหลว' },
+      { category: 'CI/CD', priority: true, prompt: 'SAST และ DAST ต่างกันอย่างไร?', choices: ['SAST สแกน Source; DAST ทดสอบระบบที่กำลังรัน', 'SAST ใช้กับ UI เท่านั้น', 'DAST สแกน Source เท่านั้น', 'ไม่มีความต่าง'], correct: 0, explanation: 'SAST วิเคราะห์โค้ดแบบ Static ส่วน DAST ยิงทดสอบช่องโหว่กับ Application ที่กำลังทำงาน' },
+      { category: 'CI/CD', priority: true, prompt: 'Canary Deployment ลดความเสี่ยงอย่างไร?', choices: ['ปล่อยให้ผู้ใช้ทั้งหมดทันที', 'ปล่อยให้ผู้ใช้ส่วนน้อยก่อนแล้วค่อยเพิ่ม', 'ต้องปิดระบบทั้งหมด', 'ไม่ต้อง Monitor'], correct: 1, explanation: 'Canary จำกัด Blast Radius ด้วยการปล่อยให้กลุ่มเล็กและ Monitor ก่อนขยาย Traffic' },
+      { category: 'CI/CD', prompt: 'Feature Flag ช่วยแยกแนวคิดใดออกจากกัน?', choices: ['Code กับ Test', 'Deployment กับ Release', 'Scope กับ Cost', 'Unit กับ Integration'], correct: 1, explanation: 'ทีม Deploy Code ไป Production ได้แต่ยังไม่ Release ให้ผู้ใช้จนกว่าจะเปิด Flag' },
+      { category: 'CI/CD', prompt: 'SLI, SLO และ SLA เรียงความหมายอย่างไร?', choices: ['Metric, Target, Contractual Promise', 'Contract, Metric, Code', 'Target, Log, Test', 'Scope, Time, Cost'], correct: 0, explanation: 'SLI คือสิ่งที่วัด, SLO คือเป้าหมาย และ SLA คือคำมั่นตามสัญญาที่อาจมีบทลงโทษ' },
+      { category: 'k6', priority: true, prompt: 'Smoke Test ใน k6 มีวัตถุประสงค์หลักอะไร?', choices: ['ทำระบบล่ม', 'ยืนยันว่าระบบและ Script ทำงานด้วยโหลดต่ำ', 'หา Memory Leak ระยะยาว', 'ทดสอบ Spike สูงสุด'], correct: 1, explanation: 'Smoke Test ใช้ VU ต่ำและเวลาสั้นเพื่อตรวจความถูกต้องก่อนเพิ่มโหลด' },
+      { category: 'k6', priority: true, prompt: 'เกณฑ์ p(95)<800ms หมายถึงอะไร?', choices: ['95% ของ Request ใช้เวลาต่ำกว่า 800ms', 'ทุก Request เท่ากับ 800ms', 'Error 95%', 'มี 95 VUs'], correct: 0, explanation: 'Percentile 95 หมายถึง 95% ของเวลาตอบสนองอยู่ต่ำกว่า 800ms' },
+      { category: 'k6', priority: true, prompt: 'Spike Test ต่างจาก Stress Test อย่างไร?', choices: ['Spike เพิ่มโหลดฉับพลัน; Stress ค่อยเพิ่มเพื่อหาขีดจำกัด', 'เหมือนกันทุกอย่าง', 'Stress ใช้ 1 VU เท่านั้น', 'Spike ใช้ระยะยาวเพื่อหา Leak'], correct: 0, explanation: 'Spike เน้นการพุ่งทันทีและการฟื้นตัว ส่วน Stress เพิ่มโหลดเพื่อดูขีดจำกัดและการเสื่อม' },
+      { category: 'k6', prompt: 'http_req_waiting ใน k6 วัดอะไร?', choices: ['เวลารอ Response จาก Server หรือ TTFB', 'จำนวน VUs', 'จำนวน Check', 'ขนาด Source Code'], correct: 0, explanation: 'http_req_waiting คือเวลารอตั้งแต่ส่ง Request จนได้รับ Byte แรกจาก Server' },
+      { category: 'ISO', priority: true, prompt: 'Profile ทั้ง 4 ของ ISO/IEC 29110 เรียงจากง่ายไปซับซ้อนอย่างไร?', choices: ['Entry→Basic→Intermediate→Advanced', 'Basic→Entry→Advanced→Intermediate', 'PM→SI→QA→HR', 'Low→Medium→High→Critical'], correct: 0, explanation: 'Generic Profile Group ประกอบด้วย Entry, Basic, Intermediate และ Advanced ตามความพร้อมองค์กร' },
+      { category: 'ISO', priority: true, prompt: 'ลำดับ SI.1–SI.6 ที่ถูกต้องคือข้อใด?', choices: ['Initiation→Requirements→Design→Construction→Integration & Test→Delivery', 'Plan→Budget→Close', 'Test→Requirements→Design', 'Delivery→Initiation→Test'], correct: 0, explanation: 'SI เริ่มเตรียมงาน วิเคราะห์ Requirement ออกแบบ พัฒนา ทดสอบรวม และส่งมอบ' },
+      { category: 'ISO', priority: true, prompt: 'Functional Appropriateness ตรวจเรื่องใด?', choices: ['ฟังก์ชันครบทุกข้อ', 'ผลคำนวณถูกต้อง', 'ฟังก์ชันช่วยผู้ใช้บรรลุงานโดยไม่ซับซ้อนเกินจำเป็น', 'ติดตั้งได้หลาย OS'], correct: 2, explanation: 'Appropriateness มองความเหมาะสมต่อเป้าหมายผู้ใช้ ไม่ซับซ้อนหรือเกินความจำเป็น' }
+    ];
+
+    const state = {
+      questions: [], index: 0, score: 0, lives: 10, combo: 0,
+      answered: false, correctCount: 0, categoryMistakes: {}
+    };
+
+    const $ = (id) => document.getElementById(id);
+
+    function selectQuestions() {
+      const shuffle = (items) => {
+        const shuffled = [...items];
+        for (let i = shuffled.length - 1; i > 0; i -= 1) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled;
+      };
+      const priorityQuestions = shuffle(QUESTION_BANK.filter((question) => question.priority)).slice(0, 10);
+      const prioritySet = new Set(priorityQuestions);
+      const remainingQuestions = shuffle(QUESTION_BANK.filter((question) => !prioritySet.has(question))).slice(0, 15);
+      return shuffle([...priorityQuestions, ...remainingQuestions]).slice(0, 25);
+    }
+
+    function resetState() {
+      state.questions = selectQuestions();
+      state.index = 0;
+      state.score = 0;
+      state.lives = 10;
+      state.combo = 0;
+      state.answered = false;
+      state.correctCount = 0;
+      state.categoryMistakes = {};
+    }
+
+    function showScreen(id) {
+      ['start-screen', 'game-screen', 'result-screen'].forEach((screen) => {
+        $(screen).hidden = screen !== id;
+      });
+    }
+
+    function startGame() {
+      resetState();
+      showScreen('game-screen');
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      const question = state.questions[state.index];
+      if (!question || !Array.isArray(question.choices) || question.choices.length !== 4) {
+        nextQuestion();
+        return;
+      }
+      state.answered = false;
+      $('question-counter').textContent = `ข้อ ${state.index + 1}/${state.questions.length}`;
+      $('score-display').textContent = `${state.score.toLocaleString('th-TH')} คะแนน`;
+      $('lives-display').textContent = `${'♥ '.repeat(state.lives)}${'♡ '.repeat(10 - state.lives)}`.trim();
+      $('lives-display').setAttribute('aria-label', `หัวใจ ${state.lives} ดวง`);
+      $('combo-display').textContent = `คอมโบ ×${state.combo}`;
+      $('category-label').textContent = question.category;
+      $('priority-badge').hidden = !question.priority;
+      $('question-text').textContent = question.prompt;
+      $('feedback').hidden = true;
+      $('feedback').textContent = '';
+      $('next-button').disabled = true;
+      const answers = $('answers');
+      answers.replaceChildren();
+      question.choices.forEach((choice, index) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'answer-button';
+        button.textContent = `${index + 1}. ${choice}`;
+        button.addEventListener('click', () => answerQuestion(index));
+        answers.append(button);
+      });
+      $('progress-fill').style.width = `${((state.index + 1) / state.questions.length) * 100}%`;
+      $('progress-fill').parentElement.setAttribute('aria-valuenow', String(state.index + 1));
+    }
+
+    function answerQuestion(selectedIndex) {
+      if (state.answered) return;
+      state.answered = true;
+      const question = state.questions[state.index];
+      const buttons = [...$('answers').querySelectorAll('button')];
+      const isCorrect = selectedIndex === question.correct;
+      buttons.forEach((button, index) => {
+        button.disabled = true;
+        if (index === question.correct) button.dataset.result = 'correct';
+        if (index === selectedIndex && !isCorrect) button.dataset.result = 'wrong';
+      });
+      if (isCorrect) {
+        state.combo += 1;
+        state.correctCount += 1;
+        state.score += 100 + Math.min(state.combo * 20, 100);
+      } else {
+        state.lives -= 1;
+        state.combo = 0;
+        state.categoryMistakes[question.category] = (state.categoryMistakes[question.category] || 0) + 1;
+      }
+      $('score-display').textContent = `${state.score.toLocaleString('th-TH')} คะแนน`;
+      $('lives-display').textContent = `${'♥ '.repeat(state.lives)}${'♡ '.repeat(10 - state.lives)}`.trim();
+      $('lives-display').setAttribute('aria-label', `หัวใจ ${state.lives} ดวง`);
+      $('combo-display').textContent = `คอมโบ ×${state.combo}`;
+      $('feedback').hidden = false;
+      $('feedback').textContent = `${isCorrect ? 'ถูกต้อง' : 'ยังไม่ถูก'} — ${question.explanation}`;
+      $('announcer').textContent = `${isCorrect ? 'ตอบถูก' : 'ตอบผิด'} ${question.explanation} คะแนนปัจจุบัน ${state.score}`;
+      $('next-button').disabled = false;
+      $('next-button').textContent = state.lives <= 0 || state.index === state.questions.length - 1 ? 'ดูสรุปผล' : 'ข้อต่อไป';
+    }
+
+    function nextQuestion() {
+      if (!state.answered && state.questions[state.index]) return;
+      if (state.lives <= 0 || state.index >= state.questions.length - 1) {
+        finishGame();
+        return;
+      }
+      state.index += 1;
+      renderQuestion();
+    }
+
+    function finishGame() {
+      const answered = Math.min(state.index + 1, state.questions.length);
+      const percent = answered ? Math.round((state.correctCount / answered) * 100) : 0;
+      let rank = 'ควรทบทวนพื้นฐาน';
+      if (percent >= 80) rank = 'Project Champion';
+      else if (percent >= 60) rank = 'Sprint Specialist';
+      else if (percent >= 40) rank = 'Developing Practitioner';
+      $('result-rank').textContent = rank;
+      $('result-score').textContent = `ตอบถูก ${state.correctCount}/${answered} ข้อ · ${state.score.toLocaleString('th-TH')} คะแนน`;
+      const review = Object.entries(state.categoryMistakes).sort((a, b) => b[1] - a[1]).slice(0, 3);
+      $('review-panel').textContent = review.length
+        ? `แนะนำให้ทบทวน: ${review.map(([category]) => category).join(' · ')}`
+        : 'ยอดเยี่ยม! รอบนี้ไม่มีหมวดที่ต้องทบทวนเป็นพิเศษ';
+      showScreen('result-screen');
+    }
+
+    function restartGame() {
+      startGame();
+    }
+
+    $('start-button').addEventListener('click', startGame);
+    $('next-button').addEventListener('click', nextQuestion);
+    $('restart-button').addEventListener('click', restartGame);
+    document.addEventListener('keydown', (event) => {
+      if (!$('game-screen').hidden && !state.answered && /^[1-4]$/.test(event.key)) {
+        answerQuestion(Number(event.key) - 1);
+      } else if (!$('game-screen').hidden && state.answered && event.key === 'Enter') {
+        nextQuestion();
+      }
+    });
+  </script>
+</body>
+</html>
